@@ -14,8 +14,10 @@ This file keeps a simple list of the steps we finish while building the backend.
 8. Created a Git repository for the backend only.
 9. Connected it to the GitHub repository `imrohit150/skillConnect-backend`.
 10. Pushed the initial setup to the `main` branch. The `.env` file was not pushed.
+11. Created the first Express server in `src/server.js`.
+12. Added Helmet security headers, Morgan request logging, and JSON body parsing.
+13. Added a root `GET /` endpoint and verified it in Postman at `http://localhost:5000/`.
 
 ## Next
 
-- Create the first Express server and run it locally.
-- Test the server using Postman.
+- Organize the API into routes and add a health-check endpoint.
