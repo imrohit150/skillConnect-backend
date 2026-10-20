@@ -17,7 +17,11 @@ This file keeps a simple list of the steps we finish while building the backend.
 11. Created the first Express server in `src/server.js`.
 12. Added Helmet security headers, Morgan request logging, and JSON body parsing.
 13. Added a root `GET /` endpoint and verified it in Postman at `http://localhost:5000/`.
+14. Created a separate health router and verified `GET /api/v1/health` in Postman.
+15. Added the MongoDB Atlas connection string to the local `.env` file, which Git ignores.
+16. Created `src/config/database.js` to connect to MongoDB using Mongoose.
+17. Updated server startup to wait for the database connection before accepting requests.
 
 ## Next
 
-- Organize the API into routes and add a health-check endpoint.
+- Learn how Mongoose schemas and models work, then create the first database model.
