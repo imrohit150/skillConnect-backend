@@ -21,7 +21,10 @@ This file keeps a simple list of the steps we finish while building the backend.
 15. Added the MongoDB Atlas connection string to the local `.env` file, which Git ignores.
 16. Created `src/config/database.js` to connect to MongoDB using Mongoose.
 17. Updated server startup to wait for the database connection before accepting requests.
+18. Created the first Mongoose model in `src/models/user.model.js` with required fields, email normalization, and timestamps.
+19. Added signup input validation, including an 18+ date-of-birth check.
+20. Built and tested `POST /api/v1/auth/signup` with Postman; it hashes the password and saves the new user in MongoDB.
 
 ## Next
 
-- Learn how Mongoose schemas and models work, then create the first database model.
+- Build the login API and learn how to compare a submitted password with its stored hash.
