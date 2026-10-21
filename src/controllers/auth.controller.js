@@ -1,7 +1,37 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user.model");
 const { signupSchema, loginSchema } = require("../validators/auth.validators");
-const { createSession } = require("../services/session.service");
+const { createSession, rotateSession } = require("../services/session.service");
+
+const setAuthCookies = (res, { accessToken, refreshToken }) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieSettings = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+  };
+
+  res.cookie("accessToken", accessToken, {
+    ...cookieSettings,
+    maxAge: 15 * 60 * 1000,
+  });
+  res.cookie("refreshToken", refreshToken, {
+    ...cookieSettings,
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+};
+
+const clearAuthCookies = (res) => {
+  const isProduction = process.env.NODE_ENV === "production";
+  const cookieSettings = {
+    httpOnly: true,
+    secure: isProduction,
+    sameSite: isProduction ? "none" : "lax",
+  };
+
+  res.clearCookie("accessToken", cookieSettings);
+  res.clearCookie("refreshToken", cookieSettings);
+}
 
 const signup = async (req, res) => {
   const result = signupSchema.safeParse(req.body);
@@ -36,6 +66,9 @@ const signup = async (req, res) => {
       passwordHash,
       dateOfBirth,
     });
+
+    const tokens = await createSession(user._id);
+    setAuthCookies(res, tokens);
 
     return res.status(201).json({
       success: true,
@@ -79,7 +112,7 @@ const login = async (req, res) => {
   try {
     const user = await User.findOne({ email });
 
-    if(!user || !(await bcrypt.compare(password, user.passwordHash))) {
+    if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({
         success: false,
         message: "Invalid email or password",
@@ -87,15 +120,7 @@ const login = async (req, res) => {
     }
 
     const { accessToken, refreshToken } = await createSession(user._id);
-    const isProduction = process.env.NODE_ENV === "production";
-    const cookieSettings = {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: isProduction ? "none" : "lax",
-    }
-
-    res.cookie("accessToken", accessToken, { ...cookieSettings, maxAge: 15 * 60 * 1000 });
-    res.cookie("refreshToken", refreshToken, { ...cookieSettings, maxAge: 7 * 24 * 60 * 60 * 1000 });
+    setAuthCookies(res, { accessToken, refreshToken });
 
     return res.status(200).json({
       success: true,
@@ -118,7 +143,47 @@ const login = async (req, res) => {
   }
 };
 
+const refresh = async (req, res) => {
+  const refreshToken = req.cookies.refreshToken;
+
+  if (!refreshToken) {
+    clearAuthCookies(res);
+    return res.status(401).json({
+      success: false,
+      message: "Refresh token is missing",
+    });
+  }
+
+  try {
+    const tokens = await rotateSession(refreshToken);
+
+    if (!tokens) {  
+      clearAuthCookies(res);
+      return res.status(401).json({
+        success: false,
+        message: "Invalid or expired refresh token",
+      });
+    }
+
+    setAuthCookies(res, tokens);
+
+    return res.status(200).json({
+      success: true,
+      message: "Tokens refreshed successfully",
+    });
+  } catch (error) {
+    console.error("Error during token refresh:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
+  setAuthCookies,
+  clearAuthCookies,
   signup,
-  login
+  login,
+  refresh,
 };

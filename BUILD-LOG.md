@@ -29,7 +29,12 @@ This file keeps a simple list of the steps we finish while building the backend.
 23. Created a refresh-session model and session service that issues access and refresh JWTs and stores only a hash of each refresh token.
 24. Added login validation and `POST /api/v1/auth/login`, which checks the password hash, creates a session, and sets HttpOnly token cookies.
 25. Configured Express to parse cookies.
+26. Tested login in Postman and confirmed the access-token and refresh-token cookies are set.
+27. Reused the session service for signup so new accounts are logged in immediately with authentication cookies.
+28. Tested signup with automatic session creation in Postman.
+29. Added `POST /api/v1/auth/refresh` with refresh-token verification, session rotation, and replacement cookies.
+30. Tested the refresh endpoint in Postman.
 
 ## Next
 
-- Test login and its cookies in Postman, then add session handling to signup and implement refresh, logout, and current-user endpoints.
+- Add logout to revoke the refresh session and clear authentication cookies, then protect routes with access-token authentication.
