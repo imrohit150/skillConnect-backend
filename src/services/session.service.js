@@ -92,7 +92,55 @@ const rotateSession = async (refreshToken) => {
   return createSession(payload.sub);
 };
 
+const revokeSession = async (refreshToken) => {
+  const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
+
+  if (!refreshSecret) {
+    throw new Error(
+      "Refresh token secret is not defined in environment variables",
+    );
+  }
+
+  let payload;
+
+  try {
+    payload = jwt.verify(refreshToken, refreshSecret);
+  } catch (error) {
+    if (
+      ["TokenExpiredError", "JsonWebTokenError", "NotBeforeError"].includes(
+        error.name,
+      )
+    ) {
+      return null;
+    }
+
+    throw error;
+  }
+
+  if (typeof payload === "string" || !payload.sub) {
+    return false;
+  }
+
+  const tokenHash = crypto
+    .createHash("sha256")
+    .update(refreshToken)
+    .digest("hex");
+
+  const session = await RefreshSession.findOneAndUpdate(
+    {
+      userId: payload.sub,
+      tokenHash,
+      revokedAt: null,
+      expiresAt: { $gt: new Date() },
+    },
+    { $set: { revokedAt: new Date() } },
+  );
+
+  return Boolean(session);
+};
+
 module.exports = {
   createSession,
   rotateSession,
+  revokeSession
 };

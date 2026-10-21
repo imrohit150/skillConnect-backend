@@ -1,7 +1,11 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user.model");
 const { signupSchema, loginSchema } = require("../validators/auth.validators");
-const { createSession, rotateSession } = require("../services/session.service");
+const {
+  createSession,
+  rotateSession,
+  revokeSession,
+} = require("../services/session.service");
 
 const setAuthCookies = (res, { accessToken, refreshToken }) => {
   const isProduction = process.env.NODE_ENV === "production";
@@ -31,7 +35,7 @@ const clearAuthCookies = (res) => {
 
   res.clearCookie("accessToken", cookieSettings);
   res.clearCookie("refreshToken", cookieSettings);
-}
+};
 
 const signup = async (req, res) => {
   const result = signupSchema.safeParse(req.body);
@@ -157,7 +161,7 @@ const refresh = async (req, res) => {
   try {
     const tokens = await rotateSession(refreshToken);
 
-    if (!tokens) {  
+    if (!tokens) {
       clearAuthCookies(res);
       return res.status(401).json({
         success: false,
@@ -180,10 +184,35 @@ const refresh = async (req, res) => {
   }
 };
 
+const logout = async (req, res) => {
+  try {
+    const refreshToken = req.cookies.refreshToken;
+
+    if (refreshToken) {
+      await revokeSession(refreshToken);
+    }
+
+    clearAuthCookies(res);
+
+    return res.status(200).json({
+      success: true,
+      message: "Logged out successfully",
+    });
+  } catch (error) {
+    console.error("Error during logout:", error.message);
+    clearAuthCookies(res);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   setAuthCookies,
   clearAuthCookies,
   signup,
   login,
   refresh,
+  logout,
 };

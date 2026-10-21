@@ -34,7 +34,9 @@ This file keeps a simple list of the steps we finish while building the backend.
 28. Tested signup with automatic session creation in Postman.
 29. Added `POST /api/v1/auth/refresh` with refresh-token verification, session rotation, and replacement cookies.
 30. Tested the refresh endpoint in Postman.
+31. Added `POST /api/v1/auth/logout` to revoke the refresh session and clear authentication cookies.
+32. Tested logout in Postman and confirmed a subsequent refresh request is rejected.
 
 ## Next
 
-- Add logout to revoke the refresh session and clear authentication cookies, then protect routes with access-token authentication.
+- Add access-token authentication middleware and protect routes, then build the current-user endpoint.
