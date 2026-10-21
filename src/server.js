@@ -3,6 +3,7 @@ require('dotenv').config();
 const express = require('express');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const cookieParser = require("cookie-parser");
 
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
@@ -13,6 +14,7 @@ const app = express();
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(cookieParser());
 
 app.use('/api/v1', healthRoutes);
 app.use('/api/v1', authRoutes);

@@ -24,7 +24,12 @@ This file keeps a simple list of the steps we finish while building the backend.
 18. Created the first Mongoose model in `src/models/user.model.js` with required fields, email normalization, and timestamps.
 19. Added signup input validation, including an 18+ date-of-birth check.
 20. Built and tested `POST /api/v1/auth/signup` with Postman; it hashes the password and saves the new user in MongoDB.
+21. Added `jsonwebtoken` and `cookie-parser` for token-based authentication.
+22. Added separate access-token and refresh-token secrets and expiry settings to the local `.env` file; the file remains ignored by Git.
+23. Created a refresh-session model and session service that issues access and refresh JWTs and stores only a hash of each refresh token.
+24. Added login validation and `POST /api/v1/auth/login`, which checks the password hash, creates a session, and sets HttpOnly token cookies.
+25. Configured Express to parse cookies.
 
 ## Next
 
-- Build the login API and learn how to compare a submitted password with its stored hash.
+- Test login and its cookies in Postman, then add session handling to signup and implement refresh, logout, and current-user endpoints.
