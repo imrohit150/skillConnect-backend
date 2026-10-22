@@ -42,7 +42,9 @@ This file keeps a simple list of the steps we finish while building the backend.
 36. Added profile-update validation that rejects unsupported fields.
 37. Added protected `GET /api/v1/profile/me` and `PATCH /api/v1/profile/me` endpoints and tested profile updates in Postman.
 38. Added authenticated `GET /api/v1/profile/:userId` for viewing another developer's public profile without exposing private fields.
+39. Added query validation and authenticated `GET /api/v1/users` with name/skill search, experience filtering, and pagination.
+40. Tested the developer directory endpoint in Postman.
 
 ## Next
 
-- Build a searchable, filterable, paginated developer directory.
+- Add connection-request models and APIs so developers can send, review, and respond to connection requests.

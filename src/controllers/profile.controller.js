@@ -6,7 +6,7 @@ const { profileUpdateSchema } = require("../validators/profile.validators");
 const profileFields =
   "name email bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
 
-  const publicProfileFields =
+const publicProfileFields =
   "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
 
 const getMyProfile = async (req, res) => {
@@ -88,7 +88,7 @@ const updateMyProfile = async (req, res) => {
 const getPublicProfile = async (req, res) => {
   const userId = req.params.userId;
 
-   if (!mongoose.isValidObjectId(userId)) {
+  if (!mongoose.isValidObjectId(userId)) {
     return res.status(400).json({
       success: false,
       message: "Invalid user ID",
