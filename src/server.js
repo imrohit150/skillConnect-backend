@@ -9,6 +9,7 @@ const healthRoutes = require("./routes/health.routes");
 const authRoutes = require("./routes/auth.routes");
 const profileRoutes = require("./routes/profile.routes");
 const usersRoutes = require("./routes/users.routes");
+const connectionsRoutes = require("./routes/connections.routes");
 const connectDB = require("./config/database");
 
 const app = express();
@@ -22,6 +23,7 @@ app.use("/api/v1", healthRoutes);
 app.use("/api/v1", authRoutes);
 app.use("/api/v1", profileRoutes);
 app.use("/api/v1", usersRoutes);
+app.use("/api/v1", connectionsRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the SkillConnect API" });

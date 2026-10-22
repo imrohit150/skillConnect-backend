@@ -1,4 +1,6 @@
 const User = require("../models/user.model");
+const ConnectionRequest = require("../models/connection-request.model");
+const UserPass = require("../models/user-pass.model");
 const searchUsersSchema =
   require("../validators/users.validators").searchUsersSchema;
 
@@ -35,6 +37,28 @@ const searchUsers = async (req, res) => {
   }
 
   try {
+    const [passedUserIds, activeRequests] = await Promise.all([
+      UserPass.distinct("passedUserId", { userId: req.user }),
+      ConnectionRequest.find({
+        status: { $in: ["pending", "accepted"] },
+        $or: [{ senderId: req.user }, { recipientId: req.user }],
+      })
+        .select("senderId recipientId")
+        .lean(),
+    ]);
+
+    const excludedUserIds = new Set([
+      req.user,
+      ...passedUserIds.map((userId) => userId.toString()),
+      ...activeRequests.map((request) =>
+        request.senderId.toString() === req.user
+          ? request.recipientId.toString()
+          : request.senderId.toString(),
+      ),
+    ]);
+
+    filters._id = { $nin: [...excludedUserIds] };
+
     const [users, total] = await Promise.all([
       User.find(filters)
         .select(

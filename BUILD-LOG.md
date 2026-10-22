@@ -44,7 +44,10 @@ This file keeps a simple list of the steps we finish while building the backend.
 38. Added authenticated `GET /api/v1/profile/:userId` for viewing another developer's public profile without exposing private fields.
 39. Added query validation and authenticated `GET /api/v1/users` with name/skill search, experience filtering, and pagination.
 40. Tested the developer directory endpoint in Postman.
+41. Added connection-request and user-pass models with indexes to prevent duplicate pending requests and duplicate passes.
+42. Added authenticated endpoints to send a request to a user and pass on a user.
+43. Prevented passing users with pending requests or accepted connections, and excluded passed users and active connections from directory results.
 
 ## Next
 
-- Add connection-request models and APIs so developers can send, review, and respond to connection requests.
+- Add endpoints to list sent, received, and passed users, then implement accept, ignore, cancel, and connection-removal actions.
