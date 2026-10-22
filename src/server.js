@@ -7,6 +7,7 @@ const cookieParser = require("cookie-parser");
 
 const healthRoutes = require('./routes/health.routes');
 const authRoutes = require('./routes/auth.routes');
+const profileRoutes = require('./routes/profile.routes');
 const connectDB = require('./config/database');
 
 const app = express();
@@ -18,6 +19,7 @@ app.use(cookieParser());
 
 app.use('/api/v1', healthRoutes);
 app.use('/api/v1', authRoutes);
+app.use('/api/v1', profileRoutes);
 app.get('/', (req, res) => {
     res.json({ message: 'Welcome to the SkillConnect API' });
 });

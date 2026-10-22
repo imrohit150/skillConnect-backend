@@ -84,6 +84,7 @@ const signup = async (req, res) => {
         bio: user.bio,
         skills: user.skills,
         profileImageUrl: user.profileImageUrl,
+        premiumStatus: user.premiumStatus,
       },
     });
   } catch (error) {
@@ -136,6 +137,7 @@ const login = async (req, res) => {
         bio: user.bio,
         skills: user.skills,
         profileImageUrl: user.profileImageUrl,
+        premiumStatus: user.premiumStatus,
       },
     });
   } catch (error) {
@@ -208,6 +210,34 @@ const logout = async (req, res) => {
   }
 };
 
+const me = async (req, res) => {
+  try {
+    const userId = req.user;
+    const user = await User.findById(userId).select(
+      "name email bio skills profileImageUrl premiumStatus",
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        success: false,
+        message: "User account no longer exists",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: user,
+    });
+
+  } catch (error) {
+    console.error("Error fetching user data:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   setAuthCookies,
   clearAuthCookies,
@@ -215,4 +245,5 @@ module.exports = {
   login,
   refresh,
   logout,
+  me,
 };

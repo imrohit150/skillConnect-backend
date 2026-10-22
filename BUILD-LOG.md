@@ -36,7 +36,12 @@ This file keeps a simple list of the steps we finish while building the backend.
 30. Tested the refresh endpoint in Postman.
 31. Added `POST /api/v1/auth/logout` to revoke the refresh session and clear authentication cookies.
 32. Tested logout in Postman and confirmed a subsequent refresh request is rejected.
+33. Added access-token authentication middleware and protected `GET /api/v1/auth/me`.
+34. Tested the protected current-user endpoint in Postman.
+35. Added profile fields for interests, experience level, and social links to the User model.
+36. Added profile-update validation that rejects unsupported fields.
+37. Added protected `GET /api/v1/profile/me` and `PATCH /api/v1/profile/me` endpoints and tested profile updates in Postman.
 
 ## Next
 
-- Add access-token authentication middleware and protect routes, then build the current-user endpoint.
+- Add public developer profiles and a searchable, paginated developer directory.

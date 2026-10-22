@@ -24,7 +24,8 @@ const userSchema = new mongoose.Schema(
     },
     profileImageUrl: {
       type: String,
-      default: "https://pixabay.com/images/download/wanderercreative-blank-profile-picture-973460_1920.png",
+      default:
+        "https://pixabay.com/images/download/wanderercreative-blank-profile-picture-973460_1920.png",
     },
     bio: {
       type: String,
@@ -33,6 +34,32 @@ const userSchema = new mongoose.Schema(
     skills: {
       type: [String],
       default: [],
+    },
+    premiumStatus: {
+      type: Boolean,
+      default: false,
+    },
+    interests: {
+      type: [String],
+      default: [],
+    },
+    experienceLevel: {
+      type: String,
+      enum: ["Beginner", "Intermediate", "Advanced"],
+    },
+    socialLinks: {
+      github: {
+        type: String,
+        default: "",
+      },
+      linkedin: {
+        type: String,
+        default: "",
+      },
+      portfolio: {
+        type: String,
+        default: "",
+      },
     },
   },
   { timestamps: true },
