@@ -41,7 +41,8 @@ This file keeps a simple list of the steps we finish while building the backend.
 35. Added profile fields for interests, experience level, and social links to the User model.
 36. Added profile-update validation that rejects unsupported fields.
 37. Added protected `GET /api/v1/profile/me` and `PATCH /api/v1/profile/me` endpoints and tested profile updates in Postman.
+38. Added authenticated `GET /api/v1/profile/:userId` for viewing another developer's public profile without exposing private fields.
 
 ## Next
 
-- Add public developer profiles and a searchable, paginated developer directory.
+- Build a searchable, filterable, paginated developer directory.

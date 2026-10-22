@@ -1,9 +1,13 @@
+const mongoose = require("mongoose");
 const User = require("../models/user.model");
 
 const { profileUpdateSchema } = require("../validators/profile.validators");
 
 const profileFields =
   "name email bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
+
+  const publicProfileFields =
+  "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
 
 const getMyProfile = async (req, res) => {
   try {
@@ -81,7 +85,41 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+const getPublicProfile = async (req, res) => {
+  const userId = req.params.userId;
+
+   if (!mongoose.isValidObjectId(userId)) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid user ID",
+    });
+  }
+
+  try {
+    const user = await User.findById(userId).select(publicProfileFields);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      user: user,
+    });
+  } catch (error) {
+    console.error("Error fetching public user profile:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 module.exports = {
   getMyProfile,
   updateMyProfile,
+  getPublicProfile,
 };
