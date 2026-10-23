@@ -48,7 +48,13 @@ This file keeps a simple list of the steps we finish while building the backend.
 42. Added authenticated endpoints to send a request to a user and pass on a user.
 43. Prevented passing users with pending requests or accepted connections, and excluded passed users and active connections from directory results.
 44. Added authenticated endpoints to list sent pending requests, received pending requests, and passed developers.
+45. Added authenticated endpoints to accept received requests, ignore received requests, and cancel sent requests. Each action checks that the logged-in user owns the relevant side of a pending request.
+46. Added `cancelled` as a connection-request status.
+47. Added an authenticated endpoint to remove an accepted connection from either participant's account.
 
 ## Next
 
-- Implement accepting or ignoring received requests, cancelling sent requests, and removing accepted connections.
+- Verify ignoring, cancelling, and removing connections in Postman if not already tested.
+- Build private conversations and messaging, allowing new messages only between connected users while retaining conversation history after a connection is removed.
+- Implement premium payments and subscription handling.
+- Add remaining production-readiness work, including automated tests, demo data, and deployment configuration.

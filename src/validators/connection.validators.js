@@ -6,4 +6,10 @@ const userIdParamSchema = z.object({
   }),
 });
 
-module.exports = { userIdParamSchema };
+const requestIdParamSchema = z.object({
+  requestId: z.string().regex(/^[0-9a-fA-F]{24}$/, {
+    error: "Request ID must be a valid ID",
+  }),
+});
+
+module.exports = { userIdParamSchema, requestIdParamSchema };

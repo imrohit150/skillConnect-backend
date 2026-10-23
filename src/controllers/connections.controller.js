@@ -1,6 +1,9 @@
 const User = require("../models/user.model");
 const ConnectionRequest = require("../models/connection-request.model");
-const { userIdParamSchema } = require("../validators/connection.validators");
+const {
+  userIdParamSchema,
+  requestIdParamSchema,
+} = require("../validators/connection.validators");
 const UserPass = require("../models/user-pass.model");
 
 const publicUserFields =
@@ -224,10 +227,193 @@ const getPassedUsers = async (req, res) => {
   }
 };
 
+const acceptRequest = async (req, res) => {
+  const result = requestIdParamSchema.safeParse(req.params);
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid request ID",
+    });
+  }
+  const { requestId } = result.data;
+
+  try {
+    const request = await ConnectionRequest.findOneAndUpdate(
+      {
+        _id: requestId,
+        recipientId: req.user,
+        status: "pending",
+      },
+      {
+        $set: { status: "accepted" },
+      },
+      { new: true },
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: "Connection request not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Connection request accepted",
+      request,
+    });
+  } catch (error) {
+    console.error("Accept request failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to accept request",
+    });
+  }
+};
+
+const ignoreRequest = async (req, res) => {
+  const result = requestIdParamSchema.safeParse(req.params);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid request ID",
+    });
+  }
+
+  try {
+    const request = await ConnectionRequest.findOneAndUpdate(
+      {
+        _id: result.data.requestId,
+        recipientId: req.user,
+        status: "pending",
+      },
+      {
+        $set: { status: "rejected" },
+      },
+      { new: true },
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: "Connection request not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Connection request ignored",
+      request,
+    });
+  } catch (error) {
+    console.error("Ignore request failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to ignore request",
+    });
+  }
+};
+
+const cancelRequest = async (req, res) => {
+  const result = requestIdParamSchema.safeParse(req.params);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid request ID",
+    });
+  }
+
+  try {
+    const request = await ConnectionRequest.findOneAndUpdate(
+      {
+        _id: result.data.requestId,
+        senderId: req.user,
+        status: "pending",
+      },
+      {
+        $set: { status: "cancelled" },
+      },
+      { new: true },
+    );
+
+    if (!request) {
+      return res.status(404).json({
+        success: false,
+        message: "Connection request not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Connection request cancelled",
+      request,
+    });
+  } catch (error) {
+    console.error("Cancel request failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to cancel request",
+    });
+  }
+};
+
+const removeConnection = async (req, res) => {
+  const result = userIdParamSchema.safeParse(req.params);
+
+  if (!result.success) {
+    return res.status(400).json({
+      success: false,
+      message: "Invalid user ID",
+    });
+  }
+
+  const otherUserId = result.data.userId;
+  if (otherUserId === req.user) {
+    return res.status(400).json({
+      success: false,
+      message: "You cannot remove yourself as a connection",
+    });
+  }
+
+  try {
+    const connection = await ConnectionRequest.findOneAndDelete({
+      status: "accepted",
+      $or: [
+        { senderId: req.user, recipientId: otherUserId },
+        { senderId: otherUserId, recipientId: req.user },
+      ],
+    });
+
+    if (!connection) {
+      return res.status(404).json({
+        success: false,
+        message: "Accepted connection not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Accepted connection removed",
+    });
+  } catch (error) {
+    console.error("Remove connection failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to remove connection",
+    });
+  }
+};
+
 module.exports = {
   sendConnectionRequest,
   skipUser,
   getSentRequests,
   getReceivedRequests,
   getPassedUsers,
+  acceptRequest,
+  ignoreRequest,
+  cancelRequest,
+  removeConnection,
 };
