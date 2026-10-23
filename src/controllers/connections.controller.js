@@ -3,6 +3,9 @@ const ConnectionRequest = require("../models/connection-request.model");
 const { userIdParamSchema } = require("../validators/connection.validators");
 const UserPass = require("../models/user-pass.model");
 
+const publicUserFields =
+  "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
+
 const sendConnectionRequest = async (req, res) => {
   const result = userIdParamSchema.safeParse(req.params);
 
@@ -158,4 +161,73 @@ const skipUser = async (req, res) => {
   }
 };
 
-module.exports = { sendConnectionRequest, skipUser };
+const getSentRequests = async (req, res) => {
+  try {
+    const sentRequests = await ConnectionRequest.find({
+      senderId: req.user,
+      status: "pending",
+    })
+      .populate("recipientId", publicUserFields)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      requests: sentRequests,
+    });
+  } catch (error) {
+    console.error("Get sent requests failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch sent requests",
+    });
+  }
+};
+
+const getReceivedRequests = async (req, res) => {
+  try {
+    const requests = await ConnectionRequest.find({
+      recipientId: req.user,
+      status: "pending",
+    })
+      .populate("senderId", publicUserFields)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      requests,
+    });
+  } catch (error) {
+    console.error("Get received requests failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch received requests",
+    });
+  }
+};
+
+const getPassedUsers = async (req, res) => {
+  try {
+    const passedUsers = await UserPass.find({ userId: req.user })
+      .populate("passedUserId", publicUserFields)
+      .sort({ createdAt: -1 });
+
+    return res.status(200).json({
+      success: true,
+      users: passedUsers,
+    });
+  } catch (error) {
+    console.error("Get passed users failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to fetch passed users",
+    });
+  }
+};
+
+module.exports = {
+  sendConnectionRequest,
+  skipUser,
+  getSentRequests,
+  getReceivedRequests,
+  getPassedUsers,
+};

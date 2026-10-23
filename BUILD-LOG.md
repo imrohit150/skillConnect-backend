@@ -47,7 +47,8 @@ This file keeps a simple list of the steps we finish while building the backend.
 41. Added connection-request and user-pass models with indexes to prevent duplicate pending requests and duplicate passes.
 42. Added authenticated endpoints to send a request to a user and pass on a user.
 43. Prevented passing users with pending requests or accepted connections, and excluded passed users and active connections from directory results.
+44. Added authenticated endpoints to list sent pending requests, received pending requests, and passed developers.
 
 ## Next
 
-- Add endpoints to list sent, received, and passed users, then implement accept, ignore, cancel, and connection-removal actions.
+- Implement accepting or ignoring received requests, cancelling sent requests, and removing accepted connections.
