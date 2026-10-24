@@ -51,6 +51,7 @@ This file keeps a simple list of the steps we finish while building the backend.
 45. Added authenticated endpoints to accept received requests, ignore received requests, and cancel sent requests. Each action checks that the logged-in user owns the relevant side of a pending request.
 46. Added `cancelled` as a connection-request status.
 47. Added an authenticated endpoint to remove an accepted connection from either participant's account.
+48. Added authenticated `GET /api/v1/connections` to list accepted connections and return the other participant's public profile.
 
 ## Next
 

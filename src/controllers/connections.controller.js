@@ -406,6 +406,41 @@ const removeConnection = async (req, res) => {
   }
 };
 
+const getConnections = async (req, res) => {
+  try {
+    const acceptedConnections = await ConnectionRequest.find({
+      status: "accepted",
+      $or: [{ senderId: req.user }, { recipientId: req.user }],
+    })
+      .populate("senderId", publicUserFields)
+      .populate("recipientId", publicUserFields);
+
+    const connections = acceptedConnections.map((connection) => {
+      const loggedInUserIsSender =
+        connection.senderId._id.toString() === req.user.toString();
+
+      return {
+        connectionId: connection._id,
+        connectedAt: connection.updatedAt,
+        user: loggedInUserIsSender
+          ? connection.recipientId
+          : connection.senderId,
+      };
+    });
+
+    return res.status(200).json({
+      success: true,
+      connections,
+    });
+  } catch (error) {
+    console.error("Get connections failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to get connections",
+    });
+  }
+};
+
 module.exports = {
   sendConnectionRequest,
   skipUser,
@@ -416,4 +451,5 @@ module.exports = {
   ignoreRequest,
   cancelRequest,
   removeConnection,
+  getConnections,
 };

@@ -9,6 +9,7 @@ const {
   ignoreRequest,
   cancelRequest,
   removeConnection,
+  getConnections,
 } = require("../controllers/connections.controller");
 const authenticate = require("../middleware/auth.middleware");
 
@@ -41,5 +42,6 @@ router.patch(
   cancelRequest,
 );
 router.delete("/connections/:userId", authenticate, removeConnection);
+router.get("/connections", authenticate, getConnections);
 
 module.exports = router;
