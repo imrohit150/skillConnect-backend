@@ -66,11 +66,14 @@ This file keeps a simple list of the steps we finish while building the backend.
 59. Added startup environment validation with Zod; the server exits with a clear message if required settings are missing or secrets are too short.
 60. Reviewed the auth cookie settings (HttpOnly, secure in production). The production `sameSite` value will be decided at deployment.
 61. Added per-socket rate limits for `message:send` and `conversation:join`.
+62. Added the Resend email service with a safe `sendEmail` helper that never throws, and set up `RESEND_API_KEY` and `EMAIL_FROM` validation.
+63. Sent an email to the recipient when a connection request is created; delivery is non-blocking so a failed email never undoes the request. Tested: the email arrived.
 
 ## Next
 
 - Verify ignoring, cancelling, and removing connections in Postman if not already tested.
 - Decide the production `sameSite` cookie value and consider scoping the refresh cookie path.
 - Implement premium payments and subscription handling.
-- Add email notifications for connection requests.
+- Later, after the frontend exists and the app has been tested end to end: add OTP email verification at signup and forgot-password, both built on the email service.
+- To send email to real users, verify a domain in Resend and update `EMAIL_FROM`; the test sender only delivers to the account owner's address.
 - Add remaining production-readiness work, including automated tests, demo data, and deployment configuration.

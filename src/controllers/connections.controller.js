@@ -1,4 +1,5 @@
 const User = require("../models/user.model");
+const { sendEmail } = require("../services/email.service");
 const ConnectionRequest = require("../models/connection-request.model");
 const {
   userIdParamSchema,
@@ -8,6 +9,14 @@ const UserPass = require("../models/user-pass.model");
 
 const publicUserFields =
   "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
+
+const escapeHtml = (text) =>
+  text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
 
 const sendConnectionRequest = async (req, res) => {
   const result = userIdParamSchema.safeParse(req.params);
@@ -30,13 +39,15 @@ const sendConnectionRequest = async (req, res) => {
   }
 
   try {
-    const recipient = await User.findById(recipientId).select("_id");
+    const recipient = await User.findById(recipientId).select("_id email name");
 
     if (!recipient) {
       return res
         .status(404)
         .json({ success: false, message: "Recipient not found" });
     }
+
+    const sender = await User.findById(senderId).select("name");
 
     const existingRequest = await ConnectionRequest.findOne({
       status: { $in: ["pending", "accepted"] },
@@ -68,6 +79,14 @@ const sendConnectionRequest = async (req, res) => {
         "Connection request was sent, but the matching pass could not be removed:",
         error.message,
       );
+    }
+
+    if (sender) {
+      sendEmail({
+        to: recipient.email,
+        subject: `${sender.name} wants to connect with you on SkillConnect`,
+        html: `<p><strong>${escapeHtml(sender.name)}</strong> sent you a connection request on SkillConnect.</p><p>Log in to accept or ignore it.</p>`,
+      });
     }
 
     return res.status(201).json({
