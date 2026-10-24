@@ -53,9 +53,17 @@ This file keeps a simple list of the steps we finish while building the backend.
 47. Added an authenticated endpoint to remove an accepted connection from either participant's account.
 48. Added authenticated `GET /api/v1/connections` to list accepted connections and return the other participant's public profile.
 
+49. Replaced deprecated Mongoose `new: true` options with `returnDocument: "after"`.
+50. Added Conversation and Message models; messages are separate documents with an index for newest-first retrieval.
+51. Installed Socket.IO and added cookie-based socket authentication; tested the connection in Postman.
+52. Added authenticated `POST /api/v1/conversations/:userId` to find or create one conversation for accepted connections; tested in Postman.
+53. Added authenticated `GET /api/v1/conversations/:conversationId/messages` with cursor-based pagination; tested in Postman.
+54. Added Socket.IO `conversation:join` and `message:send` events with participant and accepted-connection checks (not yet tested).
+55. Added authenticated `GET /api/v1/conversations` for the chat inbox with the other user and latest message; tested in Postman.
+
 ## Next
 
 - Verify ignoring, cancelling, and removing connections in Postman if not already tested.
-- Build private conversations and messaging, allowing new messages only between connected users while retaining conversation history after a connection is removed.
+- Test the Socket.IO join/send flow with two users, including blocking messages after a connection is removed.
 - Implement premium payments and subscription handling.
 - Add remaining production-readiness work, including automated tests, demo data, and deployment configuration.

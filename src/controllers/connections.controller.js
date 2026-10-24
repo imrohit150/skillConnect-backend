@@ -247,7 +247,7 @@ const acceptRequest = async (req, res) => {
       {
         $set: { status: "accepted" },
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!request) {
@@ -291,7 +291,7 @@ const ignoreRequest = async (req, res) => {
       {
         $set: { status: "rejected" },
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!request) {
@@ -335,7 +335,7 @@ const cancelRequest = async (req, res) => {
       {
         $set: { status: "cancelled" },
       },
-      { new: true },
+      { returnDocument: "after" },
     );
 
     if (!request) {
