@@ -1,12 +1,16 @@
 require("dotenv").config();
+const validateEnv = require("./config/env");
+validateEnv();
 
 const express = require("express");
 const helmet = require("helmet");
 const morgan = require("morgan");
+const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const http = require("http");
 const initSocket = require("./socket");
 
+const { apiLimiter } = require("./middleware/rate-limit.middleware");
 const healthRoutes = require("./routes/health.routes");
 const authRoutes = require("./routes/auth.routes");
 const profileRoutes = require("./routes/profile.routes");
@@ -18,9 +22,16 @@ const connectDB = require("./config/database");
 const app = express();
 
 app.use(helmet());
+app.use(
+  cors({
+    origin: process.env.CLIENT_URL || "http://localhost:5173",
+    credentials: true,
+  }),
+);
 app.use(morgan("dev"));
-app.use(express.json());
+app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
+app.use("/api/v1", apiLimiter);
 
 app.use("/api/v1", healthRoutes);
 app.use("/api/v1", authRoutes);

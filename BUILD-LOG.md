@@ -58,12 +58,19 @@ This file keeps a simple list of the steps we finish while building the backend.
 51. Installed Socket.IO and added cookie-based socket authentication; tested the connection in Postman.
 52. Added authenticated `POST /api/v1/conversations/:userId` to find or create one conversation for accepted connections; tested in Postman.
 53. Added authenticated `GET /api/v1/conversations/:conversationId/messages` with cursor-based pagination; tested in Postman.
-54. Added Socket.IO `conversation:join` and `message:send` events with participant and accepted-connection checks (not yet tested).
+54. Added Socket.IO `conversation:join` and `message:send` events with participant and accepted-connection checks.
 55. Added authenticated `GET /api/v1/conversations` for the chat inbox with the other user and latest message; tested in Postman.
+56. Tested the Socket.IO join/send flow.
+57. Added `express-rate-limit`: a strict limiter on signup/login and a general API limiter; tested the login limit in Postman.
+58. Added CORS restricted to `CLIENT_URL` with credentials enabled, and a 10kb JSON body limit.
+59. Added startup environment validation with Zod; the server exits with a clear message if required settings are missing or secrets are too short.
+60. Reviewed the auth cookie settings (HttpOnly, secure in production). The production `sameSite` value will be decided at deployment.
+61. Added per-socket rate limits for `message:send` and `conversation:join`.
 
 ## Next
 
 - Verify ignoring, cancelling, and removing connections in Postman if not already tested.
-- Test the Socket.IO join/send flow with two users, including blocking messages after a connection is removed.
+- Decide the production `sameSite` cookie value and consider scoping the refresh cookie path.
 - Implement premium payments and subscription handling.
+- Add email notifications for connection requests.
 - Add remaining production-readiness work, including automated tests, demo data, and deployment configuration.

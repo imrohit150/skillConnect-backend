@@ -10,6 +10,25 @@ const {
   sendMessageSchema,
 } = require("../validators/message.validators");
 
+const MESSAGE_LIMIT = 10;
+const MESSAGE_WINDOW_MS = 10 * 1000;
+
+const createRateLimiter = (limit, windowMs) => {
+  let timestamps = [];
+
+  return () => {
+    const now = Date.now();
+    timestamps = timestamps.filter((time) => now - time < windowMs);
+
+    if (timestamps.length >= limit) {
+      return false;
+    }
+
+    timestamps.push(now);
+    return true;
+  };
+};
+
 const initSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
@@ -37,8 +56,19 @@ const initSocket = (httpServer) => {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.userId}`);
 
+    const canSendMessage = createRateLimiter(
+      MESSAGE_LIMIT,
+      MESSAGE_WINDOW_MS,
+    );
+    const canJoinConversation = createRateLimiter(20, 10 * 1000);
+
     socket.on("conversation:join", async (payload, ack) => {
       const reply = typeof ack === "function" ? ack : () => {};
+
+      if (!canJoinConversation()) {
+        return reply({ success: false, message: "Too many requests" });
+      }
+
       const result = joinConversationSchema.safeParse(payload);
 
       if (!result.success) {
@@ -62,12 +92,23 @@ const initSocket = (httpServer) => {
         return reply({ success: true });
       } catch (error) {
         console.error("Join conversation failed:", error.message);
-        return reply({ success: false, message: "Unable to join conversation" });
+        return reply({
+          success: false,
+          message: "Unable to join conversation",
+        });
       }
     });
 
     socket.on("message:send", async (payload, ack) => {
       const reply = typeof ack === "function" ? ack : () => {};
+
+      if (!canSendMessage()) {
+        return reply({
+          success: false,
+          message: "You are sending messages too fast. Please slow down.",
+        });
+      }
+
       const result = sendMessageSchema.safeParse(payload);
 
       if (!result.success) {
