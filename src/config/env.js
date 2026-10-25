@@ -13,6 +13,12 @@ const envSchema = z.object({
     .default("development"),
   RESEND_API_KEY: z.string().min(1),
   EMAIL_FROM: z.string().min(1),
+  RAZORPAY_KEY_ID: z
+    .string()
+    .startsWith("rzp_test_", "Only Razorpay test keys are allowed"),
+  RAZORPAY_KEY_SECRET: z.string().min(1),
+  RAZORPAY_PLAN_ID: z.string().startsWith("plan_"),
+  RAZORPAY_WEBHOOK_SECRET: z.string().min(1).optional(),
 });
 
 const validateEnv = () => {

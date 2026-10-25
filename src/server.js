@@ -17,6 +17,8 @@ const profileRoutes = require("./routes/profile.routes");
 const usersRoutes = require("./routes/users.routes");
 const connectionsRoutes = require("./routes/connections.routes");
 const conversationsRoutes = require("./routes/conversations.routes");
+const paymentsRoutes = require("./routes/payments.routes");
+const { handleWebhook } = require("./controllers/payments.controller");
 const connectDB = require("./config/database");
 
 const app = express();
@@ -29,6 +31,11 @@ app.use(
   }),
 );
 app.use(morgan("dev"));
+app.post(
+  "/api/v1/payments/webhook",
+  express.raw({ type: "application/json", limit: "1mb" }),
+  handleWebhook,
+);
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 app.use("/api/v1", apiLimiter);
@@ -39,6 +46,7 @@ app.use("/api/v1", profileRoutes);
 app.use("/api/v1", usersRoutes);
 app.use("/api/v1", connectionsRoutes);
 app.use("/api/v1", conversationsRoutes);
+app.use("/api/v1", paymentsRoutes);
 
 app.get("/", (req, res) => {
   res.json({ message: "Welcome to the SkillConnect API" });

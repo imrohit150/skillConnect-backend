@@ -39,6 +39,9 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    premiumUntil: {
+      type: Date,
+    },
     interests: {
       type: [String],
       default: [],

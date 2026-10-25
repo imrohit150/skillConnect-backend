@@ -68,12 +68,19 @@ This file keeps a simple list of the steps we finish while building the backend.
 61. Added per-socket rate limits for `message:send` and `conversation:join`.
 62. Added the Resend email service with a safe `sendEmail` helper that never throws, and set up `RESEND_API_KEY` and `EMAIL_FROM` validation.
 63. Sent an email to the recipient when a connection request is created; delivery is non-blocking so a failed email never undoes the request. Tested: the email arrived.
+64. Added Razorpay test-mode setup: SDK, startup validation that rejects non-test keys, a `premiumUntil` user field, and a Subscription model.
+65. Added authenticated `POST /api/v1/payments/subscription` to create a Razorpay subscription; tested in Postman.
+66. Added authenticated `POST /api/v1/payments/verify`, which checks the payment signature on the backend and then grants premium. Premium is never granted from the frontend alone. Not yet tested with a real payment.
+67. Added authenticated `GET /api/v1/payments/subscription/me` to return premium and subscription status.
+68. Added `POST /api/v1/payments/webhook`, which validates Razorpay's signature against the raw request body, ignores duplicate events, and updates subscription and premium status. Tested with signed local requests; not yet tested with real Razorpay events.
 
 ## Next
 
 - Verify ignoring, cancelling, and removing connections in Postman if not already tested.
 - Decide the production `sameSite` cookie value and consider scoping the refresh cookie path.
-- Implement premium payments and subscription handling.
+- After the frontend exists, test the full Razorpay Checkout flow with a test card.
+- At deployment, create the Razorpay webhook with the public URL and set `RAZORPAY_WEBHOOK_SECRET`; until then the webhook returns 503.
+- Consider a scheduled job to switch off premium when `premiumUntil` passes without a status check.
 - Later, after the frontend exists and the app has been tested end to end: add OTP email verification at signup and forgot-password, both built on the email service.
 - To send email to real users, verify a domain in Resend and update `EMAIL_FROM`; the test sender only delivers to the account owner's address.
 - Add remaining production-readiness work, including automated tests, demo data, and deployment configuration.
