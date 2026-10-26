@@ -24,8 +24,7 @@ const userSchema = new mongoose.Schema(
     },
     profileImageUrl: {
       type: String,
-      default:
-        "https://pixabay.com/images/download/wanderercreative-blank-profile-picture-973460_1920.png",
+      default: "",
     },
     bio: {
       type: String,

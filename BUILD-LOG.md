@@ -74,6 +74,9 @@ This file keeps a simple list of the steps we finish while building the backend.
 67. Added authenticated `GET /api/v1/payments/subscription/me` to return premium and subscription status.
 68. Added `POST /api/v1/payments/webhook`, which validates Razorpay's signature against the raw request body, ignores duplicate events, and updates subscription and premium status. Tested with signed local requests; not yet tested with real Razorpay events.
 
+69. Added authenticated `DELETE /api/v1/users/:userId/pass` to undo a pass so the user returns to Discover; it returns 404 if the user was not passed.
+70. Added authenticated `POST /api/v1/profile/me/image` (multipart field `image`, JPG/PNG/WebP up to 5MB) using multer memory storage and Cloudinary (`CLOUDINARY_*` env vars, optional at startup, 503 if missing). Images are cropped to 600x600 around the face and stored as `skillconnect/avatars/<userId>`, so a new upload replaces the old one. Removed the default `profileImageUrl`, and `PATCH /profile/me` no longer accepts `profileImageUrl`.
+
 ## Next
 
 - Verify ignoring, cancelling, and removing connections in Postman if not already tested.

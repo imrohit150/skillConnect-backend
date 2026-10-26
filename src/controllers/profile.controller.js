@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const User = require("../models/user.model");
 
+const { isConfigured, uploadAvatar } = require("../services/cloudinary.service");
 const { profileUpdateSchema } = require("../validators/profile.validators");
 
 const profileFields =
@@ -85,6 +86,51 @@ const updateMyProfile = async (req, res) => {
   }
 };
 
+const uploadProfileImage = async (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({
+      success: false,
+      message: "Image file is required",
+    });
+  }
+
+  if (!isConfigured()) {
+    return res.status(503).json({
+      success: false,
+      message: "Image upload is not configured",
+    });
+  }
+
+  try {
+    const uploaded = await uploadAvatar(req.file.buffer, req.user);
+
+    const user = await User.findByIdAndUpdate(
+      req.user,
+      { $set: { profileImageUrl: uploaded.secure_url } },
+      { returnDocument: "after", runValidators: true },
+    ).select(profileFields);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Profile image updated successfully",
+      user: user,
+    });
+  } catch (error) {
+    console.error("Error uploading profile image:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Internal server error",
+    });
+  }
+};
+
 const getPublicProfile = async (req, res) => {
   const userId = req.params.userId;
 
@@ -122,4 +168,5 @@ module.exports = {
   getMyProfile,
   updateMyProfile,
   getPublicProfile,
+  uploadProfileImage,
 };

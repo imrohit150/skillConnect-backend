@@ -3,7 +3,6 @@ const { z } = require("zod");
 const profileUpdateSchema = z
   .object({
     name: z.string().trim().min(2).optional(),
-    profileImageUrl: z.union([z.url(), z.literal("")]).optional(),
     bio: z.string().max(300).optional(),
     skills: z.array(z.string().trim().min(1).max(50)).max(30).optional(),
     experienceLevel: z

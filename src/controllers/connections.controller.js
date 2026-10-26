@@ -183,6 +183,37 @@ const skipUser = async (req, res) => {
   }
 };
 
+const unpassUser = async (req, res) => {
+  const result = userIdParamSchema.safeParse(req.params);
+
+  if (!result.success) {
+    return res.status(400).json({ success: false, message: "Invalid user ID" });
+  }
+
+  try {
+    const deleted = await UserPass.findOneAndDelete({
+      userId: req.user,
+      passedUserId: result.data.userId,
+    });
+
+    if (!deleted) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Passed user not found" });
+    }
+
+    return res
+      .status(200)
+      .json({ success: true, message: "Pass removed successfully" });
+  } catch (error) {
+    console.error("Unpass developer failed:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Unable to remove pass",
+    });
+  }
+};
+
 const getSentRequests = async (req, res) => {
   try {
     const sentRequests = await ConnectionRequest.find({
@@ -463,6 +494,7 @@ const getConnections = async (req, res) => {
 module.exports = {
   sendConnectionRequest,
   skipUser,
+  unpassUser,
   getSentRequests,
   getReceivedRequests,
   getPassedUsers,

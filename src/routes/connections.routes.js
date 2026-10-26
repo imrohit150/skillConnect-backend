@@ -2,6 +2,7 @@ const express = require("express");
 const {
   sendConnectionRequest,
   skipUser,
+  unpassUser,
   getSentRequests,
   getReceivedRequests,
   getPassedUsers,
@@ -21,6 +22,7 @@ router.post(
   sendConnectionRequest,
 );
 router.post("/users/:userId/pass", authenticate, skipUser);
+router.delete("/users/:userId/pass", authenticate, unpassUser);
 
 router.get("/connections/requests/sent", authenticate, getSentRequests);
 router.get("/connections/requests/received", authenticate, getReceivedRequests);
