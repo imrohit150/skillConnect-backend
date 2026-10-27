@@ -22,6 +22,8 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    // Only trusted seed scripts set this; public signup/profile input cannot set it.
+    demoSeed: { type: String, select: false, immutable: true },
     passwordHash: {
       type: String,
       required: true,
