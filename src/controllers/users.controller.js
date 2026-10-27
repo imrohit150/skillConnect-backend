@@ -1,6 +1,7 @@
 const User = require("../models/user.model");
 const ConnectionRequest = require("../models/connection-request.model");
 const UserPass = require("../models/user-pass.model");
+const { withPremiumStatus } = require("../utils/premium-status");
 const searchUsersSchema =
   require("../validators/users.validators").searchUsersSchema;
 
@@ -62,7 +63,7 @@ const searchUsers = async (req, res) => {
     const [users, total] = await Promise.all([
       User.find(filters)
         .select(
-          "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks",
+          "name bio skills profileImageUrl premiumStatus premiumUntil interests experienceLevel socialLinks",
         )
         .sort({ name: 1 })
         .skip((page - 1) * limit)
@@ -72,7 +73,7 @@ const searchUsers = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      users,
+      users: users.map((user) => withPremiumStatus(user)),
       pagination: {
         page,
         limit,

@@ -4,6 +4,7 @@ const Subscription = require("../models/subscription.model");
 const WebhookEvent = require("../models/webhook-event.model");
 const razorpay = require("../services/razorpay.service");
 const { verifyPaymentSchema } = require("../validators/payment.validators");
+const { hasActivePremium } = require("../utils/premium-status");
 
 const isValidSignature = (paymentId, subscriptionId, signature) => {
   const expected = crypto
@@ -166,22 +167,13 @@ const getMySubscription = async (req, res) => {
       });
     }
 
-    if (
-      user.premiumStatus &&
-      user.premiumUntil &&
-      user.premiumUntil < new Date()
-    ) {
-      user.premiumStatus = false;
-      await user.save();
-    }
-
     const subscription = await Subscription.findOne({ userId: req.user })
       .sort({ createdAt: -1 })
       .select("status currentPeriodEnd planId");
 
     return res.status(200).json({
       success: true,
-      premiumStatus: user.premiumStatus,
+      premiumStatus: hasActivePremium(user),
       premiumUntil: user.premiumUntil || null,
       subscription: subscription
         ? {

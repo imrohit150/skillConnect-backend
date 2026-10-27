@@ -1,14 +1,15 @@
 const mongoose = require("mongoose");
 const User = require("../models/user.model");
+const { withPremiumStatus } = require("../utils/premium-status");
 
 const { isConfigured, uploadAvatar } = require("../services/cloudinary.service");
 const { profileUpdateSchema } = require("../validators/profile.validators");
 
 const profileFields =
-  "name email bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
+  "name email bio skills profileImageUrl premiumStatus premiumUntil interests experienceLevel socialLinks";
 
 const publicProfileFields =
-  "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
+  "name bio skills profileImageUrl premiumStatus premiumUntil interests experienceLevel socialLinks";
 
 const getMyProfile = async (req, res) => {
   try {
@@ -23,7 +24,7 @@ const getMyProfile = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: user,
+      user: withPremiumStatus(user),
     });
   } catch (error) {
     console.error("Error fetching user profile:", error.message);
@@ -75,7 +76,7 @@ const updateMyProfile = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Profile updated successfully",
-      user: user,
+      user: withPremiumStatus(user),
     });
   } catch (error) {
     console.error("Error updating user profile:", error.message);
@@ -120,7 +121,7 @@ const uploadProfileImage = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Profile image updated successfully",
-      user: user,
+      user: withPremiumStatus(user),
     });
   } catch (error) {
     console.error("Error uploading profile image:", error.message);
@@ -153,7 +154,7 @@ const getPublicProfile = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: user,
+      user: withPremiumStatus(user),
     });
   } catch (error) {
     console.error("Error fetching public user profile:", error.message);

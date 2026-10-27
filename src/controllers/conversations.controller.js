@@ -2,8 +2,9 @@ const Conversation = require("../models/conversation.model");
 const ConnectionRequest = require("../models/connection-request.model");
 const { userIdParamSchema } = require("../validators/connection.validators");
 const Message = require("../models/message.model");
+const { withPremiumStatus } = require("../utils/premium-status");
 
-const publicUserFields = "name profileImageUrl premiumStatus";
+const publicUserFields = "name profileImageUrl premiumStatus premiumUntil";
 
 const getOrCreateConversation = async (req, res) => {
   const result = userIdParamSchema.safeParse(req.params);
@@ -89,9 +90,9 @@ const getConversations = async (req, res) => {
 
         return {
           conversationId: conversation._id,
-          user: loggedInUserIsOne
+          user: withPremiumStatus(loggedInUserIsOne
             ? conversation.participantTwo
-            : conversation.participantOne,
+            : conversation.participantOne),
           lastMessage,
           canMessage: connectedUsers.has((loggedInUserIsOne ? conversation.participantTwo : conversation.participantOne)._id.toString()),
           lastActivityAt: lastMessage

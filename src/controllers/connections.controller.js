@@ -6,9 +6,10 @@ const {
   requestIdParamSchema,
 } = require("../validators/connection.validators");
 const UserPass = require("../models/user-pass.model");
+const { withPremiumStatus } = require("../utils/premium-status");
 
 const publicUserFields =
-  "name bio skills profileImageUrl premiumStatus interests experienceLevel socialLinks";
+  "name bio skills profileImageUrl premiumStatus premiumUntil interests experienceLevel socialLinks";
 
 const escapeHtml = (text) =>
   text
@@ -225,7 +226,10 @@ const getSentRequests = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      requests: sentRequests,
+      requests: sentRequests.map((request) => ({
+        ...request.toObject(),
+        recipientId: withPremiumStatus(request.recipientId),
+      })),
     });
   } catch (error) {
     console.error("Get sent requests failed:", error.message);
@@ -247,7 +251,10 @@ const getReceivedRequests = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      requests,
+      requests: requests.map((request) => ({
+        ...request.toObject(),
+        senderId: withPremiumStatus(request.senderId),
+      })),
     });
   } catch (error) {
     console.error("Get received requests failed:", error.message);
@@ -266,7 +273,10 @@ const getPassedUsers = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      users: passedUsers,
+      users: passedUsers.map((pass) => ({
+        ...pass.toObject(),
+        passedUserId: withPremiumStatus(pass.passedUserId),
+      })),
     });
   } catch (error) {
     console.error("Get passed users failed:", error.message);
@@ -472,9 +482,9 @@ const getConnections = async (req, res) => {
       return {
         connectionId: connection._id,
         connectedAt: connection.updatedAt,
-        user: loggedInUserIsSender
+        user: withPremiumStatus(loggedInUserIsSender
           ? connection.recipientId
-          : connection.senderId,
+          : connection.senderId),
       };
     });
 

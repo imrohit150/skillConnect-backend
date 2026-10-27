@@ -4,6 +4,7 @@ const { signupSchema, loginSchema } = require("../validators/auth.validators");
 const { beginSignup, SIGNUP_TTL_MS } = require("../services/email-verification.service");
 const respondToVerificationError = require("../utils/verification-response");
 const publicAuthUser = require("../utils/auth-user");
+const { withPremiumStatus } = require("../utils/premium-status");
 const {
   createSession,
   rotateSession,
@@ -175,7 +176,7 @@ const me = async (req, res) => {
   try {
     const userId = req.user;
     const user = await User.findById(userId).select(
-      "name email bio skills profileImageUrl premiumStatus isEmailVerified emailVerifiedAt",
+      "name email bio skills profileImageUrl premiumStatus premiumUntil isEmailVerified emailVerifiedAt",
     );
 
     if (!user) {
@@ -187,7 +188,7 @@ const me = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user,
+      user: withPremiumStatus(user),
     });
 
   } catch (error) {
