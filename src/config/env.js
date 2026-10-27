@@ -11,8 +11,11 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
-  RESEND_API_KEY: z.string().min(1),
-  EMAIL_FROM: z.string().min(1),
+  BREVO_API_KEY: z.string().trim().min(1).refine(
+    (key) => !key.startsWith("xsmtpsib-"),
+    "An SMTP key was provided. Generate a Brevo key under SMTP & API > API Keys instead.",
+  ),
+  EMAIL_FROM: z.string().trim().email(),
   RAZORPAY_KEY_ID: z
     .string()
     .startsWith("rzp_test_", "Only Razorpay test keys are allowed"),
