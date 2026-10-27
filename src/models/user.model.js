@@ -48,6 +48,7 @@ const userSchema = new mongoose.Schema(
     experienceLevel: {
       type: String,
       enum: ["Beginner", "Intermediate", "Advanced"],
+      default: "Beginner",
     },
     socialLinks: {
       github: {
