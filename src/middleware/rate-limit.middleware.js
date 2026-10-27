@@ -34,4 +34,12 @@ const emailVerificationLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, apiLimiter, emailVerificationLimiter };
+const passwordResetLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, limit: 10, standardHeaders: "draft-8", legacyHeaders: false,
+  handler: (req, res) => {
+    const retryAfter = Math.max(1, Math.ceil(((req.rateLimit.resetTime?.getTime() ?? Date.now() + 15 * 60 * 1000) - Date.now()) / 1000));
+    res.status(429).json({ success: false, code: "PASSWORD_RESET_RATE_LIMIT", message: "Too many password reset attempts. Please try again later.", retryAfter });
+  },
+});
+
+module.exports = { authLimiter, apiLimiter, emailVerificationLimiter, passwordResetLimiter };

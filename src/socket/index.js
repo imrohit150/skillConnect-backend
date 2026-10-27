@@ -47,8 +47,8 @@ const initSocket = (httpServer) => {
       }
       const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
       if (typeof payload === "string" || !payload.sub) return next(new Error("Authentication error"));
-      const user = await User.findById(payload.sub).select("isEmailVerified");
-      if (!user) return next(new Error("Authentication error"));
+      const user = await User.findById(payload.sub).select("isEmailVerified +sessionVersion");
+      if (!user || (payload.ver ?? 0) !== (user.sessionVersion ?? 0)) return next(new Error("Authentication error"));
       if (user.isEmailVerified !== true) {
         const error = new Error("Verify your email address to use chat.");
         error.data = { code: "EMAIL_NOT_VERIFIED" };

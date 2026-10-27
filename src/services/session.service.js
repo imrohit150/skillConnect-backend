@@ -1,8 +1,9 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const RefreshSession = require("../models/refresh-session.model");
+const User = require("../models/user.model");
 
-const createSession = async (userId) => {
+const createSession = async (userId, expectedVersion) => {
   const accessSecret = process.env.ACCESS_TOKEN_SECRET;
   const refreshSecret = process.env.REFRESH_TOKEN_SECRET;
 
@@ -12,11 +13,15 @@ const createSession = async (userId) => {
     );
   }
 
-  const accessToken = jwt.sign({ sub: userId.toString() }, accessSecret, {
+  const user = await User.findById(userId).select("+sessionVersion");
+  if (!user || (expectedVersion !== undefined && expectedVersion !== (user.sessionVersion ?? 0))) return null;
+  const sessionVersion = user.sessionVersion ?? 0;
+
+  const accessToken = jwt.sign({ sub: userId.toString(), ver: sessionVersion }, accessSecret, {
     expiresIn: process.env.ACCESS_TOKEN_TTL || "15m",
   });
 
-  const refreshToken = jwt.sign({ sub: userId.toString() }, refreshSecret, {
+  const refreshToken = jwt.sign({ sub: userId.toString(), ver: sessionVersion }, refreshSecret, {
     expiresIn: process.env.REFRESH_TOKEN_TTL || "7d",
     jwtid: crypto.randomUUID(),
   });
@@ -35,6 +40,7 @@ const createSession = async (userId) => {
   await RefreshSession.create({
     userId,
     tokenHash,
+    sessionVersion,
     expiresAt: new Date(decodedToken.exp * 1000),
   });
 
@@ -89,7 +95,7 @@ const rotateSession = async (refreshToken) => {
     return null;
   }
 
-  return createSession(payload.sub);
+  return createSession(payload.sub, payload.ver ?? 0);
 };
 
 const revokeSession = async (refreshToken) => {

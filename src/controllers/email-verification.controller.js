@@ -27,7 +27,8 @@ const verifyEmail = async (req, res) => {
   }
   clearPendingSignupCookie(res);
   try {
-    const tokens = await createSession(user._id);
+    const tokens = await createSession(user._id, user.sessionVersion ?? 0);
+    if (!tokens) throw new Error("Session could not be created");
     setAuthCookies(res, tokens);
     return res.status(201).json({ success: true, message: "Email verified and account created successfully", user: publicAuthUser(user) });
   } catch {

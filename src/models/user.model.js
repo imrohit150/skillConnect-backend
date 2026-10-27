@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    sessionVersion: { type: Number, default: 0, min: 0, select: false },
+    passwordResetTokenHash: { type: String, select: false, index: { sparse: true } },
+    passwordResetExpiresAt: { type: Date, select: false },
+    passwordResetLastSentAt: { type: Date, select: false },
     dateOfBirth: {
       type: Date,
       required: true,

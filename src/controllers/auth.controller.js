@@ -79,7 +79,7 @@ const login = async (req, res) => {
   const { email, password } = result.data;
 
   try {
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email }).select("+sessionVersion");
 
     if (!user || !(await bcrypt.compare(password, user.passwordHash))) {
       return res.status(401).json({
@@ -90,8 +90,9 @@ const login = async (req, res) => {
 
     if (user.isEmailVerified !== true) return res.status(403).json({ success: false, code: "EMAIL_NOT_VERIFIED", message: "Your email must be verified during signup before you can log in." });
 
-    const { accessToken, refreshToken } = await createSession(user._id);
-    setAuthCookies(res, { accessToken, refreshToken });
+    const tokens = await createSession(user._id, user.sessionVersion ?? 0);
+    if (!tokens) return res.status(401).json({ success: false, message: "Your credentials changed. Please log in again." });
+    setAuthCookies(res, tokens);
     clearPendingSignupCookie(res);
 
     return res.status(200).json({

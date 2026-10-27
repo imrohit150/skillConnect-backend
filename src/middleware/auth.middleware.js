@@ -1,4 +1,5 @@
 const jwt = require("jsonwebtoken");
+const User = require("../models/user.model");
 
 const authenticate = async (req, res, next) => {
   const accesToken = req.cookies?.accessToken;
@@ -31,6 +32,11 @@ const authenticate = async (req, res, next) => {
         message: "Invalid access token",
       });
     }
+    const user = await User.findById(payload.sub).select("isEmailVerified +sessionVersion");
+    if (!user || (payload.ver ?? 0) !== (user.sessionVersion ?? 0)) {
+      return res.status(401).json({ success: false, message: "Your session expired. Please log in again." });
+    }
+    req.authUser = user;
     req.user = payload.sub;
     next();
   } catch (error) {
