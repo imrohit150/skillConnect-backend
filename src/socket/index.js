@@ -54,6 +54,8 @@ const initSocket = (httpServer) => {
   });
 
   io.on("connection", (socket) => {
+    // Only the server chooses the authenticated user's delivery room.
+    socket.join(`user:${socket.userId}`);
     console.log(`User connected: ${socket.userId}`);
 
     const canSendMessage = createRateLimiter(
@@ -61,6 +63,11 @@ const initSocket = (httpServer) => {
       MESSAGE_WINDOW_MS,
     );
     const canJoinConversation = createRateLimiter(20, 10 * 1000);
+
+    socket.on("conversation:leave", (payload) => {
+      const result = joinConversationSchema.safeParse(payload);
+      if (result.success) socket.leave(`conversation:${result.data.conversationId}`);
+    });
 
     socket.on("conversation:join", async (payload, ack) => {
       const reply = typeof ack === "function" ? ack : () => {};
@@ -156,7 +163,7 @@ const initSocket = (httpServer) => {
           content,
         });
 
-        io.to(`conversation:${conversationId}`).emit("message:new", message);
+        io.to(`user:${socket.userId}`).to(`user:${otherUserId}`).emit("message:new", message);
         return reply({ success: true, message });
       } catch (error) {
         console.error("Send message failed:", error.message);

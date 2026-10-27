@@ -443,10 +443,10 @@ const removeConnection = async (req, res) => {
       });
     }
 
-    return res.status(200).json({
-      success: true,
-      message: "Accepted connection removed",
-    });
+    const io = req.app.get("io");
+    io?.to(`user:${req.user}`).emit("connection:removed", { userId: otherUserId });
+    io?.to(`user:${otherUserId}`).emit("connection:removed", { userId: req.user });
+    return res.status(200).json({ success: true, message: "Accepted connection removed" });
   } catch (error) {
     console.error("Remove connection failed:", error.message);
     return res.status(500).json({

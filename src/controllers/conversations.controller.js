@@ -3,7 +3,7 @@ const ConnectionRequest = require("../models/connection-request.model");
 const { userIdParamSchema } = require("../validators/connection.validators");
 const Message = require("../models/message.model");
 
-const publicUserFields = "name profileImageUrl";
+const publicUserFields = "name profileImageUrl premiumStatus";
 
 const getOrCreateConversation = async (req, res) => {
   const result = userIdParamSchema.safeParse(req.params);
@@ -63,6 +63,15 @@ const getOrCreateConversation = async (req, res) => {
 
 const getConversations = async (req, res) => {
   try {
+    const connections = await ConnectionRequest.find({
+      status: "accepted",
+      $or: [{ senderId: req.user }, { recipientId: req.user }],
+    }).select("senderId recipientId");
+    const connectedUsers = new Set(connections.map((connection) =>
+      connection.senderId.toString() === req.user
+        ? connection.recipientId.toString()
+        : connection.senderId.toString(),
+    ));
     const conversations = await Conversation.find({
       $or: [{ participantOne: req.user }, { participantTwo: req.user }],
     })
@@ -70,13 +79,13 @@ const getConversations = async (req, res) => {
       .populate("participantTwo", publicUserFields);
 
     const inbox = await Promise.all(
-      conversations.map(async (conversation) => {
+      conversations.filter((conversation) => conversation.participantOne && conversation.participantTwo).map(async (conversation) => {
         const loggedInUserIsOne =
           conversation.participantOne._id.toString() === req.user;
 
         const lastMessage = await Message.findOne({
           conversationId: conversation._id,
-        }).sort({ createdAt: -1 });
+        }).sort({ createdAt: -1, _id: -1 });
 
         return {
           conversationId: conversation._id,
@@ -84,6 +93,7 @@ const getConversations = async (req, res) => {
             ? conversation.participantTwo
             : conversation.participantOne,
           lastMessage,
+          canMessage: connectedUsers.has((loggedInUserIsOne ? conversation.participantTwo : conversation.participantOne)._id.toString()),
           lastActivityAt: lastMessage
             ? lastMessage.createdAt
             : conversation.createdAt,

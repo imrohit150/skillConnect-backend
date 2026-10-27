@@ -77,6 +77,8 @@ This file keeps a simple list of the steps we finish while building the backend.
 69. Added authenticated `DELETE /api/v1/users/:userId/pass` to undo a pass so the user returns to Discover; it returns 404 if the user was not passed.
 70. Added authenticated `POST /api/v1/profile/me/image` (multipart field `image`, JPG/PNG/WebP up to 5MB) using multer memory storage and Cloudinary (`CLOUDINARY_*` env vars, optional at startup, 503 if missing). Images are cropped to 600x600 around the face and stored as `skillconnect/avatars/<userId>`, so a new upload replaces the old one. Removed the default `profileImageUrl`, and `PATCH /profile/me` no longer accepts `profileImageUrl`.
 
+71. Completed chat pagination and inbox delivery support. History now returns `nextCursor` with both timestamp and message ID, validates the cursor, and uses a deterministic `{ createdAt: -1, _id: -1 }` sort plus a matching index so same-millisecond messages are not skipped. The older timestamp-only query remains accepted. Socket connections join a server-selected user room; saved messages are delivered to both participants' user rooms so inactive chats update the inbox. Added conversation-room leave handling, premium status in inbox profiles and `canMessage` based on accepted connections. Connection removal emits a targeted event to both users so their composers disable immediately while past history remains readable. The web project's isolated test suite exercises the real history/socket/controller code with in-memory fixtures: 17 checks passed. No production database or real accounts were used for these tests.
+
 ## Next
 
 - Verify ignoring, cancelling, and removing connections in Postman if not already tested.

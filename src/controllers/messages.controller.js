@@ -17,7 +17,7 @@ const getMessages = async (req, res) => {
   }
 
   const { conversationId } = params.data;
-  const { before, limit } = query.data;
+  const { before, beforeId, limit } = query.data;
 
   try {
     const conversation = await Conversation.findOne({
@@ -34,20 +34,33 @@ const getMessages = async (req, res) => {
 
     const filter = { conversationId };
     if (before) {
-      filter.createdAt = { $lt: new Date(before) };
+      const timestamp = new Date(before);
+      if (beforeId) {
+        filter.$or = [
+          { createdAt: { $lt: timestamp } },
+          { createdAt: timestamp, _id: { $lt: beforeId } },
+        ];
+      } else {
+        filter.createdAt = { $lt: timestamp };
+      }
     }
 
     const messages = await Message.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1, _id: -1 })
       .limit(limit + 1);
 
     const hasMore = messages.length > limit;
     const page = hasMore ? messages.slice(0, limit) : messages;
+    const oldest = page.at(-1);
 
     return res.status(200).json({
       success: true,
       messages: page.reverse(),
       hasMore,
+      nextCursor: hasMore && oldest ? {
+        before: oldest.createdAt.toISOString(),
+        beforeId: oldest._id.toString(),
+      } : null,
     });
   } catch (error) {
     console.error("Get messages failed:", error.message);
