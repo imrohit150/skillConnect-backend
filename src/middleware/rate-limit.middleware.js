@@ -22,4 +22,16 @@ const apiLimiter = rateLimit({
   },
 });
 
-module.exports = { authLimiter, apiLimiter };
+const emailVerificationLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 20,
+  standardHeaders: "draft-8",
+  legacyHeaders: false,
+  handler: (req, res) => {
+    // Include the delay in JSON because cross-origin clients cannot always read Retry-After.
+    const retryAfter = Math.max(1, Math.ceil(((req.rateLimit.resetTime?.getTime() ?? Date.now() + 15 * 60 * 1000) - Date.now()) / 1000));
+    res.status(429).json({ success: false, code: "VERIFICATION_RATE_LIMIT", message: "Too many verification requests. Please try again later.", retryAfter });
+  },
+});
+
+module.exports = { authLimiter, apiLimiter, emailVerificationLimiter };

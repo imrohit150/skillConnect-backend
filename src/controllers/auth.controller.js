@@ -1,6 +1,9 @@
 const bcrypt = require("bcryptjs");
 const User = require("../models/user.model");
 const { signupSchema, loginSchema } = require("../validators/auth.validators");
+const { beginSignup, SIGNUP_TTL_MS } = require("../services/email-verification.service");
+const respondToVerificationError = require("../utils/verification-response");
+const publicAuthUser = require("../utils/auth-user");
 const {
   createSession,
   rotateSession,
@@ -37,6 +40,9 @@ const clearAuthCookies = (res) => {
   res.clearCookie("refreshToken", cookieSettings);
 };
 
+const pendingCookieOptions = () => ({ httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", path: "/api/v1/auth" });
+const clearPendingSignupCookie = (res) => res.clearCookie("pendingSignup", pendingCookieOptions());
+
 const signup = async (req, res) => {
   const result = signupSchema.safeParse(req.body);
 
@@ -51,54 +57,12 @@ const signup = async (req, res) => {
     });
   }
 
-  const { name, email, password, dateOfBirth } = result.data;
-
   try {
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-
-    const passwordHash = await bcrypt.hash(password, 12);
-
-    const user = await User.create({
-      name,
-      email,
-      passwordHash,
-      dateOfBirth,
-    });
-
-    const tokens = await createSession(user._id);
-    setAuthCookies(res, tokens);
-
-    return res.status(201).json({
-      success: true,
-      message: "Account created successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        bio: user.bio,
-        skills: user.skills,
-        profileImageUrl: user.profileImageUrl,
-        premiumStatus: user.premiumStatus,
-      },
-    });
+    const { token, signup } = await beginSignup(result.data);
+    res.cookie("pendingSignup", token, { ...pendingCookieOptions(), maxAge: SIGNUP_TTL_MS });
+    return res.status(202).json({ success: true, message: "Check your email to finish signing up. Your account has not been created yet.", signup });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(409).json({
-        success: false,
-        message: "An account with this email already exists",
-      });
-    }
-    console.error("Error during signup:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal server error",
-    });
+    return respondToVerificationError(res, error);
   }
 };
 
@@ -124,21 +88,16 @@ const login = async (req, res) => {
       });
     }
 
+    if (user.isEmailVerified !== true) return res.status(403).json({ success: false, code: "EMAIL_NOT_VERIFIED", message: "Your email must be verified during signup before you can log in." });
+
     const { accessToken, refreshToken } = await createSession(user._id);
     setAuthCookies(res, { accessToken, refreshToken });
+    clearPendingSignupCookie(res);
 
     return res.status(200).json({
       success: true,
       message: "Logged in successfully",
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        bio: user.bio,
-        skills: user.skills,
-        profileImageUrl: user.profileImageUrl,
-        premiumStatus: user.premiumStatus,
-      },
+      user: publicAuthUser(user),
     });
   } catch (error) {
     console.error("Error during login:", error.message);
@@ -187,6 +146,7 @@ const refresh = async (req, res) => {
 };
 
 const logout = async (req, res) => {
+  clearPendingSignupCookie(res);
   try {
     const refreshToken = req.cookies.refreshToken;
 
@@ -214,7 +174,7 @@ const me = async (req, res) => {
   try {
     const userId = req.user;
     const user = await User.findById(userId).select(
-      "name email bio skills profileImageUrl premiumStatus",
+      "name email bio skills profileImageUrl premiumStatus isEmailVerified emailVerifiedAt",
     );
 
     if (!user) {
@@ -226,7 +186,7 @@ const me = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      user: user,
+      user,
     });
 
   } catch (error) {
@@ -241,6 +201,7 @@ const me = async (req, res) => {
 module.exports = {
   setAuthCookies,
   clearAuthCookies,
+  clearPendingSignupCookie,
   signup,
   login,
   refresh,

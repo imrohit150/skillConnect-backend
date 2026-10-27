@@ -1,5 +1,6 @@
 const express = require("express");
-const { authLimiter } = require("../middleware/rate-limit.middleware");
+const { authLimiter, emailVerificationLimiter } = require("../middleware/rate-limit.middleware");
+const { pendingSignup, verifyEmail, resendVerification } = require("../controllers/email-verification.controller");
 
 const {
   signup,
@@ -17,5 +18,8 @@ router.post("/auth/login", authLimiter, login);
 router.post("/auth/refresh", refresh);
 router.post("/auth/logout", logout);
 router.get("/auth/me", authenticate, me);
+router.get("/auth/signup/pending", emailVerificationLimiter, pendingSignup);
+router.post("/auth/email-verification/verify", emailVerificationLimiter, verifyEmail);
+router.post("/auth/email-verification/resend", emailVerificationLimiter, resendVerification);
 
 module.exports = router;

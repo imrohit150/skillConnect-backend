@@ -5,6 +5,7 @@ const { parseCookie } = require("cookie");
 const Conversation = require("../models/conversation.model");
 const Message = require("../models/message.model");
 const ConnectionRequest = require("../models/connection-request.model");
+const User = require("../models/user.model");
 const {
   joinConversationSchema,
   sendMessageSchema,
@@ -37,7 +38,7 @@ const initSocket = (httpServer) => {
     },
   });
 
-  io.use((socket, next) => {
+  io.use(async (socket, next) => {
     try {
       const cookies = parseCookie(socket.handshake.headers.cookie || "");
       const token = cookies.accessToken;
@@ -45,6 +46,14 @@ const initSocket = (httpServer) => {
         return next(new Error("Authentication error"));
       }
       const payload = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET);
+      if (typeof payload === "string" || !payload.sub) return next(new Error("Authentication error"));
+      const user = await User.findById(payload.sub).select("isEmailVerified");
+      if (!user) return next(new Error("Authentication error"));
+      if (user.isEmailVerified !== true) {
+        const error = new Error("Verify your email address to use chat.");
+        error.data = { code: "EMAIL_NOT_VERIFIED" };
+        return next(error);
+      }
       socket.userId = payload.sub;
       next();
     } catch (err) {
