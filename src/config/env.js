@@ -5,12 +5,24 @@ const envSchema = z.object({
   ACCESS_TOKEN_SECRET: z.string().min(32),
   REFRESH_TOKEN_SECRET: z.string().min(32),
   PORT: z.coerce.number().int().positive().default(5000),
-  CLIENT_URL: z.string().url().default("http://localhost:3000"),
+  CLIENT_URL: z.string().url().refine((value) => {
+    if (!URL.canParse(value)) return false;
+    const url = new URL(value);
+    return ["http:", "https:"].includes(url.protocol) &&
+      !url.username && !url.password && url.pathname === "/" &&
+      !url.search && !url.hash;
+  }, "Use the HTTP(S) frontend origin without credentials, a path, query or fragment")
+    .default("http://localhost:3000"),
   ACCESS_TOKEN_TTL: z.string().default("15m"),
   REFRESH_TOKEN_TTL: z.string().default("7d"),
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  TRUST_PROXY_HOPS: z.string().trim()
+    .regex(/^\d+$/, "Use a non-negative integer proxy hop count")
+    .transform(Number)
+    .pipe(z.number().int().min(0).max(Number.MAX_SAFE_INTEGER))
+    .optional(),
   BREVO_API_KEY: z.string().trim().min(1).refine(
     (key) => !key.startsWith("xsmtpsib-"),
     "An SMTP key was provided. Generate a Brevo key under SMTP & API > API Keys instead.",
@@ -25,6 +37,21 @@ const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string().min(1).optional(),
   CLOUDINARY_API_KEY: z.string().min(1).optional(),
   CLOUDINARY_API_SECRET: z.string().min(1).optional(),
+}).superRefine((env, context) => {
+  if (env.NODE_ENV === "production" && URL.canParse(env.CLIENT_URL) && new URL(env.CLIENT_URL).protocol !== "https:") {
+    context.addIssue({
+      code: "custom",
+      path: ["CLIENT_URL"],
+      message: "Production requires an HTTPS frontend URL for secure authentication cookies",
+    });
+  }
+  if (env.NODE_ENV === "production" && env.TRUST_PROXY_HOPS === undefined) {
+    context.addIssue({
+      code: "custom",
+      path: ["TRUST_PROXY_HOPS"],
+      message: "Set the verified proxy hop count for your deployment (0 only for direct connections without a reverse proxy)",
+    });
+  }
 });
 
 const validateEnv = () => {

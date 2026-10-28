@@ -11,13 +11,17 @@ const {
   revokeSession,
 } = require("../services/session.service");
 
+// Hosted requests are proxied through the frontend origin. Do not set Domain:
+// the browser must scope cookies to the frontend host that served the response.
+const cookieOptions = (path = "/") => ({
+  httpOnly: true,
+  secure: process.env.NODE_ENV === "production",
+  sameSite: "lax",
+  path,
+});
+
 const setAuthCookies = (res, { accessToken, refreshToken }) => {
-  const isProduction = process.env.NODE_ENV === "production";
-  const cookieSettings = {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-  };
+  const cookieSettings = cookieOptions();
 
   res.cookie("accessToken", accessToken, {
     ...cookieSettings,
@@ -30,18 +34,13 @@ const setAuthCookies = (res, { accessToken, refreshToken }) => {
 };
 
 const clearAuthCookies = (res) => {
-  const isProduction = process.env.NODE_ENV === "production";
-  const cookieSettings = {
-    httpOnly: true,
-    secure: isProduction,
-    sameSite: isProduction ? "none" : "lax",
-  };
+  const cookieSettings = cookieOptions();
 
   res.clearCookie("accessToken", cookieSettings);
   res.clearCookie("refreshToken", cookieSettings);
 };
 
-const pendingCookieOptions = () => ({ httpOnly: true, secure: process.env.NODE_ENV === "production", sameSite: process.env.NODE_ENV === "production" ? "none" : "lax", path: "/api/v1/auth" });
+const pendingCookieOptions = () => cookieOptions("/api/v1/auth");
 const clearPendingSignupCookie = (res) => res.clearCookie("pendingSignup", pendingCookieOptions());
 
 const signup = async (req, res) => {

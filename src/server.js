@@ -1,6 +1,6 @@
 require("dotenv").config();
 const validateEnv = require("./config/env");
-validateEnv();
+const env = validateEnv();
 
 const express = require("express");
 const helmet = require("helmet");
@@ -11,6 +11,8 @@ const http = require("http");
 const initSocket = require("./socket");
 
 const { apiLimiter } = require("./middleware/rate-limit.middleware");
+const protectApiOrigin = require("./middleware/origin.middleware");
+const { getClientOrigin } = require("./utils/request-origin");
 const healthRoutes = require("./routes/health.routes");
 const authRoutes = require("./routes/auth.routes");
 const profileRoutes = require("./routes/profile.routes");
@@ -23,19 +25,30 @@ const connectDB = require("./config/database");
 
 const app = express();
 
+// Trust only the configured number of proxies, before middleware reads req.ip.
+// Direct local connections ignore forwarded headers unless explicitly configured.
+app.set("trust proxy", env.TRUST_PROXY_HOPS ?? 0);
+
 app.use(helmet());
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: getClientOrigin(),
     credentials: true,
   }),
 );
 app.use(morgan("dev"));
+app.use("/api/v1", (_req, res, next) => {
+  // Authenticated data and Set-Cookie responses must never enter shared caches.
+  res.set("Cache-Control", "private, no-store");
+  next();
+});
 app.post(
   "/api/v1/payments/webhook",
   express.raw({ type: "application/json", limit: "1mb" }),
   handleWebhook,
 );
+// Razorpay's signed webhook above is the only state-changing API exemption.
+app.use("/api/v1", protectApiOrigin);
 app.use(express.json({ limit: "10kb" }));
 app.use(cookieParser());
 app.use("/api/v1", apiLimiter);

@@ -6,6 +6,7 @@ const Conversation = require("../models/conversation.model");
 const Message = require("../models/message.model");
 const ConnectionRequest = require("../models/connection-request.model");
 const User = require("../models/user.model");
+const { getClientOrigin, isTrustedRequestOrigin } = require("../utils/request-origin");
 const {
   joinConversationSchema,
   sendMessageSchema,
@@ -33,9 +34,20 @@ const createRateLimiter = (limit, windowMs) => {
 const initSocket = (httpServer) => {
   const io = new Server(httpServer, {
     cors: {
-      origin: process.env.CLIENT_URL || "http://localhost:3000",
+      origin: getClientOrigin(),
       credentials: true,
     },
+  });
+
+  io.engine.on("headers", (headers) => {
+    headers["Cache-Control"] = "private, no-store";
+  });
+
+  // Engine middleware covers handshakes, later polling requests, and WS upgrades.
+  // CORS alone cannot reject a cross-origin WebSocket connection.
+  io.engine.use((req, _res, next) => {
+    if (isTrustedRequestOrigin(req)) return next();
+    return next(new Error("Request origin is not allowed"));
   });
 
   io.use(async (socket, next) => {

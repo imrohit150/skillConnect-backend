@@ -76,7 +76,6 @@ const createSubscription = async (req, res) => {
 };
 
 const verifyPayment = async (req, res) => {
-  console.log("Verifying payment with data:", req.body);
   const result = verifyPaymentSchema.safeParse(req.body);
 
   if (!result.success) {
